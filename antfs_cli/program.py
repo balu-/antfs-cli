@@ -35,6 +35,8 @@ import traceback
 
 from ant.fs.manager import Application, AntFSAuthenticationException
 from ant.fs.file import File
+from ant.fs.commandpipe import Time
+
 from . import utilities
 from . import scripting
 
@@ -189,6 +191,18 @@ class AntFSCLI(Application):
                 return False
 
     def on_transport(self, beacon):
+        #transmit time so that devices can adjust their clocks
+        x = datetime.datetime.utcnow() - datetime.datetime(1989, 12, 31, 0, 0, 0)
+        t = Time(int(x.total_seconds()), 0xffffffff, 0)
+        self._send_commandpipe(t.get())
+        result = self._get_commandpipe()
+        #it seems as if at least vivofit does not return anything usefull here (or anything at all)
+        try:
+            print("Time:", result.get_request_id())
+            print("response:",  result.get_response())
+        except:
+            pass
+
         directory = self.download_directory()
         # directory.print_list()
 
